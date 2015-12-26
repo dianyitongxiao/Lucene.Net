@@ -2,6 +2,7 @@
 using Lucene.Net.Analysis.PanGu;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Search;
 using Lucene.Net.Store;
 using System;
 using System.Collections.Generic;
@@ -13,15 +14,18 @@ using System.Web.Mvc;
 namespace demo02.Controllers
 {
     public class LuceneNetController : Controller
-    {
+    {        
+
         // GET: LuceneNet
         public ActionResult Index()
         {
             return View();
         }
 
-        public ActionResult Demo1()
+        public ActionResult Demo1(string searchKey = "")
         {
+            ViewBag.SearchKey = searchKey;
+            Search(searchKey);
             return View();
         }
 
@@ -44,10 +48,8 @@ namespace demo02.Controllers
         }
 
         private FSDirectory CreateFSDirectory()
-        {
-            string indexPath = HttpContext.Server.MapPath("~/IndexData");
-
-            FSDirectory directory = FSDirectory.Open(new DirectoryInfo(indexPath), new NativeFSLockFactory());
+        {            
+            FSDirectory directory = FSDirectory.Open(new DirectoryInfo(GetIndexDataPath()), new NativeFSLockFactory());
 
             bool isExist = IndexReader.IndexExists(directory);
             if (isExist)
@@ -79,6 +81,24 @@ namespace demo02.Controllers
             document.Add(new Field("content", news.Content.ToString(), Field.Store.YES, Field.Index.ANALYZED, Field.TermVector.WITH_POSITIONS_OFFSETS));
 
             return document;
+        }
+
+        private void Search(string searchKey)
+        {
+            FSDirectory directory = FSDirectory.Open(new DirectoryInfo(GetIndexDataPath()), new NoLockFactory());
+            IndexReader reader = IndexReader.Open(directory, true);
+            IndexSearcher searcher = new IndexSearcher(reader);
+
+            PhraseQuery query = new PhraseQuery();
+            foreach (var item in Util.SplitContent.SplitWords(searchKey))
+            {
+
+            }
+        }
+
+        private string GetIndexDataPath()
+        {
+            return HttpContext.Server.MapPath("~/IndexData"); 
         }
     }
 }

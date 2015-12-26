@@ -5,14 +5,15 @@
 
 <h2>Demo1</h2>
 
+<p>
+    @Html.ActionLink("Create Index", "CreateIndex")
+</p>
 
-
-@using (Html.BeginForm())
-{
+<form action="/LuceneNet/Demo1" method="get">
     <div>
-        请输入搜索关键字: <input type="text" name="SearchKey" value="" />
-        <input type="submit" name="btnSearch" value="search" />                
+        请输入搜索关键字: <input type="text" name="SearchKey" value="@ViewBag.SearchKey" />
+        <input type="submit" name="btnSearch" value="search" />
     </div>
-}
+</form>
 
-@Html.ActionLink("Create Index","CreateIndex")
+
