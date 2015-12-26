@@ -1,0 +1,18 @@
+﻿
+@{
+    ViewBag.Title = "Demo1";
+}
+
+<h2>Demo1</h2>
+
+
+
+@using (Html.BeginForm())
+{
+    <div>
+        请输入搜索关键字: <input type="text" name="SearchKey" value="" />
+        <input type="submit" name="btnSearch" value="search" />                
+    </div>
+}
+
+@Html.ActionLink("Create Index","CreateIndex")
