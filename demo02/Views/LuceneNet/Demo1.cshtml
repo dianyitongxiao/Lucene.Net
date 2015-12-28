@@ -1,4 +1,5 @@
-﻿
+﻿@model List<News>
+
 @{
     ViewBag.Title = "Demo1";
 }
@@ -16,4 +17,9 @@
     </div>
 </form>
 
-
+@foreach (var item in Model)
+{
+    <p>@item.Id</p>
+    <p>@Html.Raw(item.Title)</p>
+    <p>@Html.Raw(item.Content)</p>
+}
