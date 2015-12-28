@@ -28,7 +28,7 @@ namespace demo02.Controllers
         public ActionResult Demo1(string searchKey = "")
         {
             ViewBag.SearchKey = searchKey;
-            List<News> news = new List<News>();
+            List<object> news = new List<object>();
             if (!string.IsNullOrEmpty(searchKey))
                 news = Search(searchKey);
             return View(news);
@@ -39,13 +39,17 @@ namespace demo02.Controllers
             var directory = CreateFSDirectory();
             bool isExist = IndexReader.IndexExists(directory);
 
-            IndexWriter writer = new IndexWriter(directory, new PanGuAnalyzer(), !isExist, IndexWriter.MaxFieldLength.UNLIMITED);
-            writer.DeleteAll();
-
+            IndexWriter writer = new IndexWriter(directory, new PanGuAnalyzer(), !isExist, IndexWriter.MaxFieldLength.UNLIMITED);            
+        
             GetNews().ForEach(m =>
             {
                 writer.AddDocument(NewsToDocument(m));
             });
+
+            Document doc = new Document();
+            doc.Add(new Field("type", "video", Field.Store.YES, Field.Index.NOT_ANALYZED));
+            doc.Add(new Field("title", "ASP.NET登录", Field.Store.YES, Field.Index.ANALYZED, Field.TermVector.WITH_POSITIONS_OFFSETS));
+            writer.AddDocument(doc);
 
             writer.Dispose();
             directory.Dispose();
@@ -71,9 +75,9 @@ namespace demo02.Controllers
         {
             List<News> list = new List<News>();
 
-            list.Add(new News { Id = Guid.NewGuid(), Title = "ASP.NET验证问题", Content = "验证什么验证的是灰常重要的验证问题.... " });
-            list.Add(new News { Id = Guid.NewGuid(), Title = "Web API验证问题", Content = "验证什么的是灰常重要的...." });
-            list.Add(new News { Id = Guid.NewGuid(), Title = "ASP.NET登录", Content = "问题也是一个大问题" });
+            list.Add(new News { Id = new Guid("1C4507C7-BB2E-4A8D-ABFF-0E5D2B274DEB"), Title = "ASP.NET验证问题", Content = "验证什么验证的是灰常重要的验证问题.... " });
+            list.Add(new News { Id = new Guid("85BB5EA3-D63B-43C4-BC79-909112658417"), Title = "Web API验证问题", Content = "验证什么的是灰常重要的...." });
+            list.Add(new News { Id = new Guid("36B53DE4-C23A-4DFE-9094-C09D2EBDFCDB"), Title = "ASP.NET登录", Content = "问题也是一个大问题" });
 
             return list;
         }
@@ -83,6 +87,7 @@ namespace demo02.Controllers
             Document document = new Document();
 
             document.Add(new Field("id", news.Id.ToString(), Field.Store.YES, Field.Index.NOT_ANALYZED));
+            document.Add(new Field("type", "news", Field.Store.YES, Field.Index.NOT_ANALYZED));
             document.Add(new Field("title", news.Title.ToString(), Field.Store.YES, Field.Index.ANALYZED, Field.TermVector.WITH_POSITIONS_OFFSETS));
             document.Add(new Field("content", news.Content.ToString(), Field.Store.YES, Field.Index.ANALYZED, Field.TermVector.WITH_POSITIONS_OFFSETS));
 
@@ -103,7 +108,18 @@ namespace demo02.Controllers
             return news;
         }
 
-        private List<News> Search(string searchKey)
+        private Video DocumentToVideo(string keyword, Document doc)
+        {
+            if (doc == null) return null;
+
+            Video video = new Video();
+            video.Title = doc.Get("title");
+            video.Title = SplitContent.HightLight(keyword, video.Title);
+        
+            return video;
+        }
+
+        private List<object> Search(string searchKey)
         {
             FSDirectory directory = FSDirectory.Open(new DirectoryInfo(GetIndexDataPath()), new NoLockFactory());
             IndexReader reader = IndexReader.Open(directory, true);
@@ -127,24 +143,29 @@ namespace demo02.Controllers
             //     queryResult.Add(new Term("title", item));
             // }
 
+
+
             string[] fields = new string[] { "title", "content" };
-            //Occur[] occurs = new Occur[] { Occur.MUST, Occur.MUST };
+            //Occur[] occurs = new Occur[] { Occur.SHOULD, Occur.SHOULD };
             //Query query = MultiFieldQueryParser.Parse(Lucene.Net.Util.Version.LUCENE_30, searchKey, fields, occurs, new PanGuAnalyzer());
 
             MultiFieldQueryParser parser = new MultiFieldQueryParser(Lucene.Net.Util.Version.LUCENE_30, fields, new PanGuAnalyzer());
-            var query = parser.Parse(searchKey);            
+            var query = parser.Parse(searchKey);
 
             TopScoreDocCollector collector = TopScoreDocCollector.Create(1000, true);
             searcher.Search(query, null, collector);
             ScoreDoc[] docs = collector.TopDocs(0, collector.TotalHits).ScoreDocs; //达到分页效果
 
-            List<News> list = new List<News>();
+            List<object> list = new List<object>();
 
             foreach (var item in docs)
             {
                 int docId = item.Doc;
                 Document doc = searcher.Doc(docId);
-                list.Add(DocumentToNews(searchKey, doc));
+                if (doc.Get("type") == "news")
+                    list.Add(DocumentToNews(searchKey, doc));
+                else
+                    list.Add(DocumentToVideo(searchKey, doc));
             }
 
             return list;

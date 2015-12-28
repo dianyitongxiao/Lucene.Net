@@ -1,4 +1,4 @@
-﻿@model List<News>
+﻿@model List<object>
 
 @{
     ViewBag.Title = "Demo1";
@@ -19,7 +19,18 @@
 
 @foreach (var item in Model)
 {
-    <p>@item.Id</p>
-    <p>@Html.Raw(item.Title)</p>
-    <p>@Html.Raw(item.Content)</p>
+    if (item is News)
+    {
+        var news = item as News;
+        <h3>新闻</h3>
+        <p>@news.Id</p>
+        <p>@Html.Raw(news.Title)</p>
+        <p>@Html.Raw(news.Content)</p>
+    }
+    else if (item is Video)
+    {
+        <h3>视频</h3>
+        var video = item as Video;
+        <p>@Html.Raw(video.Title)</p>
+    }
 }
