@@ -31,6 +31,21 @@ namespace demo02.Controllers
             List<object> news = new List<object>();
             if (!string.IsNullOrEmpty(searchKey))
                 news = Search(searchKey);
+            else
+            {
+                FSDirectory directory = FSDirectory.Open(new DirectoryInfo(GetIndexDataPath()), new NoLockFactory());
+                IndexReader reader = IndexReader.Open(directory, true);
+                for (int i = 0; i < reader.NumDocs(); i++)
+                {
+                    Document doc = reader[i];
+
+                    if (doc.Get("type") == "news")
+                        news.Add(DocumentToNews(searchKey, doc));
+                    else
+                        news.Add(DocumentToVideo(searchKey, doc));                    
+                }
+            }
+
             return View(news);
         }
 
@@ -39,8 +54,8 @@ namespace demo02.Controllers
             var directory = CreateFSDirectory();
             bool isExist = IndexReader.IndexExists(directory);
 
-            IndexWriter writer = new IndexWriter(directory, new PanGuAnalyzer(), !isExist, IndexWriter.MaxFieldLength.UNLIMITED);            
-        
+            IndexWriter writer = new IndexWriter(directory, new PanGuAnalyzer(), !isExist, IndexWriter.MaxFieldLength.UNLIMITED);
+
             GetNews().ForEach(m =>
             {
                 writer.AddDocument(NewsToDocument(m));
@@ -115,7 +130,7 @@ namespace demo02.Controllers
             Video video = new Video();
             video.Title = doc.Get("title");
             video.Title = SplitContent.HightLight(keyword, video.Title);
-        
+
             return video;
         }
 
@@ -123,6 +138,7 @@ namespace demo02.Controllers
         {
             FSDirectory directory = FSDirectory.Open(new DirectoryInfo(GetIndexDataPath()), new NoLockFactory());
             IndexReader reader = IndexReader.Open(directory, true);
+
             IndexSearcher searcher = new IndexSearcher(reader);
 
             //PhraseQuery query = new PhraseQuery();

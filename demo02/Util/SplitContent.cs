@@ -31,7 +31,7 @@ namespace demo02.Util
 
         public static string HightLight(string keyword, string content)
         {
-            if (!content.ToLower().Contains(keyword.ToLower())) return content;
+            if (string.IsNullOrEmpty(keyword) || !content.ToLower().Contains(keyword.ToLower())) return content;
 
             SimpleHTMLFormatter simpleHTMLFormatter = 
                 new SimpleHTMLFormatter("<font style=\"font-style:normal;color:#cc0000;\"><b>", "</b></font>");

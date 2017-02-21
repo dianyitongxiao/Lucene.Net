@@ -26,11 +26,13 @@
         <p>@news.Id</p>
         <p>@Html.Raw(news.Title)</p>
         <p>@Html.Raw(news.Content)</p>
+        <hr/>
     }
     else if (item is Video)
     {
         <h3>视频</h3>
         var video = item as Video;
         <p>@Html.Raw(video.Title)</p>
+        <hr />
     }
 }
